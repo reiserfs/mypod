@@ -21,6 +21,7 @@
 /storage/pail
 /vendor
 /vendor/
+/deploy/.env
 Homestead.json
 Homestead.yaml
 Thumbs.db
@@ -35,4 +36,4 @@ public_html/hot
 public_html/storage
 storage/*.key
 yarn-error.log
-
+docker-compose.yml
