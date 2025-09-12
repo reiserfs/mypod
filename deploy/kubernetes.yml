@@ -1,0 +1,189 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mypod
+---
+# MySQL Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mypod-db
+  namespace: mypod
+  labels:
+    app: mypod-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mypod-db
+  template:
+    metadata:
+      labels:
+        app: mypod-db
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mypod-secret
+                  key: DB_ROOT_PASSWORD
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: mypod-config
+                  key: DB_DATABASE
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mypod-secret
+                  key: DB_USERNAME
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mypod-secret
+                  key: DB_PASSWORD
+          ports:
+            - containerPort: 3306
+          readinessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - ping
+                - "-h"
+                - "127.0.0.1"
+            initialDelaySeconds: 10
+            periodSeconds: 5
+---
+# MySQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mypod-db
+  namespace: mypod
+spec:
+  selector:
+    app: mypod-db
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+---
+# App Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mypod
+  namespace: mypod
+  labels:
+    app: mypod
+spec:
+  revisionHistoryLimit: 1
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mypod
+  template:
+    metadata:
+      labels:
+        app: mypod
+    spec:
+      containers:
+        - name: mypod-php
+          image: ghcr.io/reiserfs/mypod/mypod-php:v1.0.10
+          envFrom:
+            - configMapRef:
+                name: mypod-config
+            - secretRef:
+                name: mypod-secret
+          ports:
+            - containerPort: 9000 # PHP-FPM
+          volumeMounts:
+            - name: app-code
+              mountPath: /var/www/html
+              
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: app-code
+              mountPath: /var/www/html
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+      volumes:
+        - name: app-code
+          emptyDir: {}
+        - name: nginx-config
+          configMap:
+            name: nginx-config
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - mypod
+                topologyKey: "kubernetes.io/hostname"
+---
+# App Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mypod
+  namespace: mypod
+spec:
+  selector:
+    app: mypod
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-prefix-mypod
+  namespace: mypod
+spec:
+  stripPrefix:
+    prefixes:
+      - /
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: traefik-mypod
+  namespace: mypod
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: mypod-strip-prefix-mypod@kubernetescrd,mypod-redirect-to-https@kubernetescrd
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: "mypod.infrasolutions.net.br"
+      http:
+        paths:
+          - backend:
+              service:
+                name: mypod
+                port:
+                  number: 80
+            path: "/"
+            pathType: Prefix
+  tls:
+    - secretName: tls-mypod.infrasolutions.net.br
+      hosts:
+        - mypod.infrasolutions.net.br
+status:
+  loadBalancer: {}
+
+

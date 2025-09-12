@@ -22,6 +22,7 @@
 /src/vendor
 /src/vendor/
 /deploy/.env
+/deploy/configmap.yml
 /src/Homestead.json
 /src/Homestead.yaml
 /src/Thumbs.db

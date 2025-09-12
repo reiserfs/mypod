@@ -29,3 +29,9 @@ jobs:
 
       - name: Push da imagem
         run: docker push ghcr.io/${{ github.repository }}/mypod-php:${{ env.VERSION }}
+
+      - name: Build da imagem arm64
+        run: docker build . --file Dockerfile --platform linux/arm64 --tag ghcr.io/${{ github.repository }}/mypod-php-arm:${{ env.VERSION }}
+
+      - name: Push da imagem amr64
+        run: docker push ghcr.io/${{ github.repository }}/mypod-php-arm:${{ env.VERSION }}        
