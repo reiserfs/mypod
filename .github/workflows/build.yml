@@ -30,11 +30,34 @@ jobs:
         id: vars
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
-      - name: Build e Push multiplataforma
+      # Build da imagem base apenas se houver mudanças ou commit "build-custom-php"
+      - name: Verificar se precisa buildar base
+        id: check_base
+        run: |
+          if git log -1 --pretty=%B | grep -q "build-custom-php"; then
+            echo "BUILD_BASE=true" >> $GITHUB_ENV
+          elif git diff --quiet HEAD^ HEAD -- docker/Dockerfile.base; then
+            echo "BUILD_BASE=false" >> $GITHUB_ENV
+          else
+            echo "BUILD_BASE=true" >> $GITHUB_ENV
+          fi
+
+      - name: Build & Push base image
+        if: env.BUILD_BASE == 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile
+          file: docker/Dockerfile.base
+          push: true
+          tags: ghcr.io/${{ github.repository }}/custom-8.4-fpm-alpine:latest
+          platforms: linux/amd64,linux/arm64
+
+      # Build da imagem final da aplicação
+      - name: Build & Push app image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.app
           push: true
           tags: |
             ghcr.io/${{ github.repository }}/mypod-php:${{ env.VERSION }}
