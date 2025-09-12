@@ -16,7 +16,5 @@ jobs:
 
       - name: Criar release semântico
         uses: go-semantic-release/action@v1
-        with:
-          provider: github-token
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
