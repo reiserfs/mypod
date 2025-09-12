@@ -1,12 +1,14 @@
 name: Docker Image CI
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v*"
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
@@ -18,8 +20,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Extrair versão da tag
+        id: vars
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
       - name: Build da imagem
-        run: docker build . --file Dockerfile --tag ghcr.io/${{ github.repository }}/app:${{ github.event.release.tag_name }}
+        run: docker build . --file Dockerfile --tag ghcr.io/${{ github.repository }}/app:${{ env.VERSION }}
 
       - name: Push da imagem
-        run: docker push ghcr.io/${{ github.repository }}/app:${{ github.event.release.tag_name }}
+        run: docker push ghcr.io/${{ github.repository }}/app:${{ env.VERSION }}
