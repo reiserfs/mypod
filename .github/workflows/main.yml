@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write   # <--- necessário para criar tags e releases
+
 jobs:
   release:
     runs-on: ubuntu-latest
