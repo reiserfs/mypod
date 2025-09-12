@@ -25,7 +25,7 @@ jobs:
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       - name: Build da imagem
-        run: docker build . --file Dockerfile --tag ghcr.io/${{ github.repository }}/app:${{ env.VERSION }}
+        run: docker build . --file Dockerfile --tag ghcr.io/${{ github.repository }}/mypod-php:${{ env.VERSION }}
 
       - name: Push da imagem
-        run: docker push ghcr.io/${{ github.repository }}/app:${{ env.VERSION }}
+        run: docker push ghcr.io/${{ github.repository }}/mypod-php:${{ env.VERSION }}
