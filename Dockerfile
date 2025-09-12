@@ -24,7 +24,7 @@ RUN apk add --no-cache --virtual .build-deps \
     && apk del .build-deps
 
 WORKDIR /var/www/html
-COPY . .
+COPY ./src/ .
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
