@@ -164,12 +164,12 @@ metadata:
   name: traefik-mypod
   namespace: mypod
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: mypod-strip-prefix-mypod@kubernetescrd,mypod-redirect-to-https@kubernetescrd
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares: mypod-strip-prefix-mypod@kubernetescrd,website-redirect-to-https@kubernetescrd
+    cert-manager.io/cluster-issuer: letsencrypt-stg
 spec:
   ingressClassName: traefik
   rules:
-    - host: "mypod.infrasolutions.net.br"
+    - host: "mypod.infrasolution.net.br"
       http:
         paths:
           - backend:
@@ -180,9 +180,9 @@ spec:
             path: "/"
             pathType: Prefix
   tls:
-    - secretName: tls-mypod.infrasolutions.net.br
+    - secretName: tls-mypod.infrasolution.net.br
       hosts:
-        - mypod.infrasolutions.net.br
+        - mypod.infrasolution.net.br
 status:
   loadBalancer: {}
 
