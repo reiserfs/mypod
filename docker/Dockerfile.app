@@ -9,7 +9,7 @@ COPY ./src/ ./
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Ajusta permissões
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chown -R www-data:www-data storage bootstrap/cache
 
 EXPOSE 9000
 CMD ["/bin/sh", "-c", "if [ -z \"$(ls -A /var/www/html)\" ]; then mv /app/* /var/www/html/; fi && php-fpm"]
