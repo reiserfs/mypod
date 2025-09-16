@@ -1,6 +1,6 @@
 FROM ghcr.io/reiserfs/mypod/custom-8.4-fpm-alpine:latest
 
-WORKDIR /var/www/html
+WORKDIR /app
 
 # Copia o código da aplicação
 COPY ./src/ ./
@@ -12,4 +12,4 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 EXPOSE 9000
-CMD ["php-fpm"]
+CMD ["/bin/sh", "-c", "if [ -z \"$(ls -A /var/www/html)\" ]; then mv /app/* /var/www/html/; fi && php-fpm"]
